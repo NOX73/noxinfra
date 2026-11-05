@@ -1,5 +1,6 @@
 # Public zone nox73.com. Apex NS/SOA are Google-managed and not tracked.
 
+# Delegation of v.nox73.com to its own Cloud DNS zone in project noxvpn-skv384 (noxvpn).
 resource "google_dns_record_set" "v_ns" {
   deletion_policy = "DELETE"
   managed_zone    = "nox73"
