@@ -141,11 +141,41 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 - [ ] `.tflint.hcl` с google ruleset, `Makefile` с целями `fmt` / `validate` / `lint` / `plan`.
 
 ### 5. Импорт
-- [ ] Основной путь — нативные `import {}` блоки +
+- [x] Основной путь — нативные `import {}` блоки +
   `terraform plan -generate-config-out=generated.tf`. Сгенерированный HCL вычистить
-  (убрать дефолты и computed-поля), разложить по файлам.
-- [ ] Критерий готовности проекта: `terraform plan` показывает **No changes**.
-- [ ] Порядок: начать с самого простого проекта, на нём отладить процесс.
+  (убрать дефолты и computed-поля), разложить по файлам. Блоки `import {}` оставляем в
+  коде: после импорта они ничего не делают, но показывают, откуда взялся ресурс.
+- [x] Критерий готовности проекта: `terraform plan` показывает **No changes**.
+- [x] Порядок: начали с самого простого проекта (`noxapp-39eee`), на нём отладили процесс.
+
+Что выяснилось по ходу:
+- Ресурсы Firebase (`google_firebase_*`) есть только в `google-beta`.
+- Запросы к API проекта должны идти в его же квоту: в провайдере
+  `user_project_override = true`, `billing_project = <project>`. Иначе квота считается по
+  домашнему проекту SA, а там эти API не включены.
+- Лейблы, которые проставил Google (`firebase=enabled` и т.п.), в код не пишем. Иначе
+  Terraform начинает ими управлять.
+- `deletion_policy` есть у всех ресурсов (провайдер 8.x). У API ставим `ABANDON`: если
+  убрать ресурс из кода, API не выключится. У того, что нельзя терять, ставим `PREVENT`.
+
+#### `noxapp-39eee` — готово
+- Под управлением Terraform: Firebase-проект, Android-приложение `com.nox73.noxapp`,
+  Firestore `(default)` (`eur3`), 6 используемых API (`apikeys` включён при импорте), оба
+  API-ключа, которые создал Firebase. Ещё роль `datastore.owner` для compute SA из
+  `thermal-history-343013`: через неё серверная функция пишет `/public/daily_info`.
+- Удалено: дубль Android-приложения `com.noxapp`. Его можно восстановить в течение 30
+  дней.
+- Вне Terraform: Firestore rules и indexes (их деплоит Firebase CLI из репо приложения),
+  service agents и `firebase-adminsdk` (ими управляет Firebase), default Hosting site.
+- Что можно улучшить дальше (каждый пункт — отдельное изменение):
+  - [ ] Android-ключ: ограничить по package name и SHA-1 подписи. Нужен SHA-1
+    сертификата из Play Console или keystore.
+  - [ ] Browser-ключ: веб-приложений в проекте нет, ключ, скорее всего, можно удалить.
+  - [ ] Firestore: включить `delete_protection_state`, решить про PITR.
+  - [ ] `datastore.owner` для compute SA шире, чем нужно. Для записи хватит
+    `roles/datastore.user`.
+
+#### `thermal-history-343013` — следующий
 
 ### 6. Эксплуатация
 - [ ] Регулярный `terraform plan` по всем проектам для поиска дрейфа.
