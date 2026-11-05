@@ -167,15 +167,31 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   дней.
 - Вне Terraform: Firestore rules и indexes (их деплоит Firebase CLI из репо приложения),
   service agents и `firebase-adminsdk` (ими управляет Firebase), default Hosting site.
-- Что можно улучшить дальше (каждый пункт — отдельное изменение):
-  - [ ] Android-ключ: ограничить по package name и SHA-1 подписи. Нужен SHA-1
-    сертификата из Play Console или keystore.
-  - [ ] Browser-ключ: веб-приложений в проекте нет, ключ, скорее всего, можно удалить.
-  - [ ] Firestore: включить `delete_protection_state`, решить про PITR.
-  - [ ] `datastore.owner` для compute SA шире, чем нужно. Для записи хватит
-    `roles/datastore.user`.
+- Что можно улучшить: [improvements.md](improvements.md).
 
-#### `thermal-history-343013` — следующий
+#### `thermal-history-343013` — готово
+- Под управлением Terraform (`gcp/thermal-history-343013/`):
+  - default VPC и 5 firewall-правил;
+  - VM `instance-1` (Outline VPN) со статическим IP;
+  - расписание снапшотов, метаданные проекта, политика Ops Agent;
+  - зона `nox73.com` и 4 записи в ней;
+  - Cloud Run `noxapp` с доменом `noxapp.nox73.com`;
+  - Scheduler `noxapp-sync-images`;
+  - Artifact Registry и бакет, которые создают деплои из исходников;
+  - 3 сервисных аккаунта, 3 роли на уровне проекта, 15 используемых API.
+- В `gcp/_bootstrap/agent.tf`: SA `claude-agent`, его роли во всех 4 проектах,
+  `billing.viewer` на billing-аккаунтах, API админки.
+- **Секреты в код не попадают.** В env Cloud Run и в URL Scheduler лежат секреты открытым
+  текстом, поэтому у этих полей стоит `ignore_changes`, а в коде их нет. В state секреты
+  всё равно есть. Черновик `-generate-config-out` с секретами генерировали вне репо и потом
+  удалили.
+- Cloud Run: Terraform владеет «оболочкой» сервиса. Образ, сборку и env задают деплои
+  (`ignore_changes`).
+- Вне Terraform: ключи SA (импорт не поддерживается), снапшоты, ревизии Cloud Run, образы
+  в Artifact Registry, connectivity tests (мусор), `_Default`/`_Required` логи, apex NS/SOA,
+  default compute SA и service agents, `roles/owner` человека.
+
+Найденные проблемы и что улучшить — в [improvements.md](improvements.md).
 
 ### 6. Эксплуатация
 - [ ] Регулярный `terraform plan` по всем проектам для поиска дрейфа.
