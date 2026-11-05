@@ -1,0 +1,64 @@
+// Operator devcontainer for noxinfra: Terraform for all personal cloud resources (GCP first).
+// See https://aka.ms/devcontainer.json for the format.
+{
+	"name": "noxinfra operator",
+
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "."
+	},
+
+	// Same absolute path as on the host: keeps paths in logs/plans/Claude sessions identical.
+	"workspaceFolder": "${localWorkspaceFolder}",
+	"workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached",
+
+	"mounts": [
+		// All operator state lives in a named volume, never in the repo and never on the host:
+		// gcloud user credentials + ADC, terraform plugin cache, shell history, and
+		// Claude Code state (~/.claude history/memory/settings, ~/.claude.json).
+		// Survives container rebuilds; `docker volume rm noxinfra-home` wipes it.
+		"source=noxinfra-home,target=/root,type=volume"
+	],
+
+	"containerEnv": {
+		"TF_PLUGIN_CACHE_DIR": "/root/.terraform.d/plugin-cache",
+		"HISTFILE": "/root/.bash_history_persist",
+		// Several GCP projects are managed from here, so no default project is pinned.
+		// Auth = your user account via `gcloud auth login --update-adc` (stored in the volume).
+		"NOXINFRA_DEVCONTAINER": "1"
+	},
+
+	// Isolation from the host: no forwarded ssh-agent, git or docker credential bridges.
+	"remoteEnv": {
+		"SSH_AUTH_SOCK": ""
+	},
+	"postAttachCommand": "bash .devcontainer/isolate.sh",
+
+	"runArgs": [
+		"--hostname=noxinfra-dev"
+	],
+
+	"postCreateCommand": "bash .devcontainer/setup.sh",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"Anthropic.claude-code",
+				"hashicorp.terraform",
+				"redhat.vscode-yaml",
+				"timonwong.shellcheck"
+			],
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"[terraform]": {
+					"editor.defaultFormatter": "hashicorp.terraform",
+					"editor.formatOnSave": true
+				},
+				"[terraform-vars]": {
+					"editor.defaultFormatter": "hashicorp.terraform",
+					"editor.formatOnSave": true
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,28 @@
+# --- secrets & private operator state (never commit) ---
+secrets/
+*.age
+*.key
+*.pem
+.env
+.env.*
+local/
+
+# --- terraform ---
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+*.auto.tfvars
+terraform.tfvars
+!*.example.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# bulk-export / generated drafts before they are curated into real code
+generated/
+
+# --- misc ---
+.DS_Store
