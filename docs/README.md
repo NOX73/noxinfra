@@ -98,30 +98,46 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 - [x] Billing-аккаунты: `01C100-B62CB3-89CCC4` (USD, к нему привязан
   `thermal-history-343013`), `01F31D-A21EE0-6CD6CC` (RUB, проекты не привязаны),
   `007304-975A5D-1651C9` (закрыт). У остальных проектов billing не подключён.
-- [x] Скоуп: `thermal-history-343013` и `noxapp-39eee`. По `talktruly` и
-  `gen-lang-client-0948610743` решение отложено.
-- [ ] По каждому проекту — включённые API и все ресурсы:
+- [x] Скоуп: полностью описываем `thermal-history-343013` и `noxapp-39eee`.
+  - `gen-lang-client-0948610743` импортирован только как объект: сам проект и API
+    `generativelanguage`, в `gcp/_bootstrap/projects.tf`. Его создал AI Studio, в нём живут
+    Gemini API-ключи («Gemini API Key», «Aixle staging») и их SA. Ключами управляет AI
+    Studio, а при импорте строка ключа попала бы в state.
+  - `talktruly` вне Terraform по решению: проект пустой (только стандартные API, billing
+    нет), пусть остаётся как есть.
+- [ ] По каждому проекту из скоупа — включённые API и все ресурсы:
   `gcloud services list --enabled --project=P`,
   `gcloud asset search-all-resources --scope=projects/P` (нужен API `cloudasset.googleapis.com`).
+  Бывает, что Cloud Asset API зависает без ответа (так было 2026-11-05). Тогда ресурсы
+  смотрим через API каждого сервиса: `gcloud storage buckets list`, `bq ls` и т.п.
 - [ ] Решить по каждому ресурсу: импортировать, удалить как мусор или оставить вне Terraform
   (с причиной).
 
 ### 3. Remote state
 - [x] Проект-«админка» для state: `thermal-history-343013` (там же живёт SA).
-- [ ] GCS-бакет с версионированием и uniform bucket-level access. Создаётся вручную
-  (курица и яйцо), затем импортируется в Terraform сам.
+- [x] Бакет `gs://noxinfra-tfstate` (`EUROPE-WEST4`). Версионирование включено, старые
+  версии удаляются через 90 дней. Включены uniform access и
+  `public_access_prevention = enforced`. От удаления защищают `prevent_destroy` и
+  `deletion_policy = PREVENT`.
+- [x] Курица и яйцо решены так: `gcp/_bootstrap` применили с локальным state, затем
+  перенесли его в созданный бакет (`terraform init -migrate-state`). Prefix в бакете
+  совпадает с путём модуля в репо: `gcp/_bootstrap`, `gcp/<project>`.
 
 ### 4. Структура репозитория
-- [ ] Предварительно: отдельный root module (и отдельный state) на каждый GCP-проект плюс
-  общий `modules/`. Например:
+- [ ] Отдельный root module (и отдельный state) на каждый GCP-проект плюс общий
+  `modules/`:
   ```
   gcp/
-    _bootstrap/     # бакет state, сам проект-админка
-    <project-a>/
+    _bootstrap/     # уровень аккаунта: бакет state, google_project всех проектов,
+                    # позже привязки к billing, SA claude-agent и его роли
+    <project-a>/    # ресурсы внутри проекта
     <project-b>/
   modules/
   ```
-- [ ] Закрепить версии провайдеров (`google`, `google-beta`), коммитить `.terraform.lock.hcl`.
+  `gcp/_bootstrap/` уже есть: проект-админка, бакет state, Gemini-проект.
+- [x] Версии: `google ~> 8.10`, Terraform `>= 1.17`. `.terraform.lock.hcl` коммитится и
+  собирается под linux_arm64, linux_amd64 и darwin_arm64 (`terraform providers lock`).
+- [ ] `google-beta`, когда понадобится.
 - [ ] `.tflint.hcl` с google ruleset, `Makefile` с целями `fmt` / `validate` / `lint` / `plan`.
 
 ### 5. Импорт
