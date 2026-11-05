@@ -65,7 +65,7 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 ## Что предстоит
 
 ### 1. Репозиторий
-- [ ] `git init`, первый коммит, remote.
+- [x] `git init`, первый коммит, remote (`github.com:NOX73/noxinfra`).
 
 ### 2. Инвентаризация GCP
 - [ ] Список проектов и billing-аккаунтов: `gcloud projects list`, `gcloud billing accounts list`.
