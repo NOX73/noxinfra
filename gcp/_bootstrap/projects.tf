@@ -33,3 +33,22 @@ resource "google_project_service" "gemini_generativelanguage" {
   # ABANDON only drops it from state.
   deletion_policy = "ABANDON"
 }
+
+# Firebase project of the NoxApp Android app; resources inside: gcp/noxapp-39eee.
+# No billing: Firebase Spark (free) plan.
+import {
+  to = google_project.noxapp
+  id = "noxapp-39eee"
+}
+
+resource "google_project" "noxapp" {
+  project_id = "noxapp-39eee"
+  name       = "noxapp"
+
+  # Labels firebase=enabled / firebase-core=disabled are set by Firebase itself and are
+  # deliberately not managed here.
+
+  auto_create_network = true
+
+  deletion_policy = "PREVENT"
+}
