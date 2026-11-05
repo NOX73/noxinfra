@@ -39,22 +39,31 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   контейнера. Полный сброс — `docker volume rm noxinfra-home`.
 - **Репо смонтировано по тому же абсолютному пути, что на хосте.** Пути в логах, планах и
   сессиях Claude совпадают.
-- **В контейнере работает только сервисный аккаунт `claude-agent`, с правами на чтение.**
-  В контейнере работает агент (Claude Code), а всё, что лежит на волюме, ему доступно. Если
-  войти туда личным аккаунтом, агент получит права владельца, и вход через имперсонацию
-  этого не меняет. Поэтому в контейнере лежит только ключ SA:
-  `/root/.config/gcloud/claude-agent.json` на волюме, в репо его нет. Его же через
-  `GOOGLE_APPLICATION_CREDENTIALS` использует Terraform. Этого хватает на инвентаризацию и
-  `terraform plan`. `apply` пока делает человек, вне контейнера. `CLOUDSDK_CORE_PROJECT`
-  не задан, проект всегда указывается явно.
+- **В контейнере работает только сервисный аккаунт `claude-agent`.** В контейнере работает
+  агент (Claude Code), а всё, что лежит на волюме, ему доступно. Поэтому личным аккаунтом там
+  не логинимся, в контейнере лежит только ключ SA: `/root/.config/gcloud/claude-agent.json` на
+  волюме, в репо его нет. Его же через `GOOGLE_APPLICATION_CREDENTIALS` использует
+  Terraform. `CLOUDSDK_CORE_PROJECT` не задан, проект всегда указывается явно.
   - SA создан в `thermal-history-343013`. Там же включены API, которые идут на его квоту
-    (`cloudasset`, `cloudresourcemanager`, `serviceusage`, `iam`), и выдана роль
-    `serviceusage.serviceUsageConsumer`.
-  - В каждом проекте у SA есть `roles/viewer`, `roles/iam.securityReviewer` и
-    `roles/cloudasset.viewer`.
+    (`cloudasset`, `cloudresourcemanager`, `serviceusage`, `iam`, `cloudbilling`), и выдана
+    роль `serviceusage.serviceUsageConsumer`.
+  - Проекты в скоупе (`thermal-history-343013`, `noxapp-39eee`): `roles/editor` и
+    `roles/iam.securityAdmin`. Этого хватает для `apply`, включая IAM-биндинги. Владельцем
+    проекта SA не сделан, поэтому удалить проект напрямую не может. Но через
+    `securityAdmin` он может выдать себе любую роль, так что фактически это права уровня
+    владельца.
+  - Остальные проекты: только чтение (`roles/viewer`, `roles/iam.securityReviewer`,
+    `roles/cloudasset.viewer`).
+  - Открытые billing-аккаунты: `roles/billing.viewer`.
   - Ключ создаётся на хосте и копируется в контейнер:
     `docker cp key.json $(docker ps -q --filter label=devcontainer.local_folder=$PWD):/root/.config/gcloud/claude-agent.json`.
-    После этого копию на хосте нужно удалить.
+    После этого копию на хосте нужно удалить. Ключ стоит периодически ротировать.
+- **Ограничитель для агента: `.claude/settings.json`.** Правила `ask` для разрушающих
+  команд: `terraform apply/destroy/import/state rm|mv|push/force-unlock` (в том числе
+  через `tf`, `-chdir=` и `make apply|destroy`), `gcloud … delete|disable`,
+  `gcloud … *-iam-policy*`, `gcloud storage rm`, `gsutil rm|rb`. Такие команды агент
+  выполняет только после подтверждения человеком. Это защита от ошибки, а не граница
+  безопасности: у SA есть права на запись.
 - **Изоляция от хоста:** нет docker socket и docker CLI, нет проброшенного ssh-agent, нет
   host git credential helper. Для Terraform это не нужно, а доступ к хосту меньше.
 - **`config-connector` не ставится на arm64.** Пакет `google-cloud-cli-config-connector`
@@ -86,8 +95,11 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   `gen-lang-client-0948610743` (Default Gemini Project), `noxapp-39eee` (Firebase),
   `talktruly`, `thermal-history-343013` (основные ресурсы: VM, VPC, Cloud Run, DNS,
   Artifact Registry).
-- [ ] Billing-аккаунты: SA их не видит. Нужен API `cloudbilling` и роль
-  `billing.viewer` на billing-аккаунте, либо `gcloud billing accounts list` на хосте.
+- [x] Billing-аккаунты: `01C100-B62CB3-89CCC4` (USD, к нему привязан
+  `thermal-history-343013`), `01F31D-A21EE0-6CD6CC` (RUB, проекты не привязаны),
+  `007304-975A5D-1651C9` (закрыт). У остальных проектов billing не подключён.
+- [x] Скоуп: `thermal-history-343013` и `noxapp-39eee`. По `talktruly` и
+  `gen-lang-client-0948610743` решение отложено.
 - [ ] По каждому проекту — включённые API и все ресурсы:
   `gcloud services list --enabled --project=P`,
   `gcloud asset search-all-resources --scope=projects/P` (нужен API `cloudasset.googleapis.com`).
@@ -95,7 +107,7 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   (с причиной).
 
 ### 3. Remote state
-- [ ] Выбрать проект-«админку» для state (существующий или новый).
+- [x] Проект-«админка» для state: `thermal-history-343013` (там же живёт SA).
 - [ ] GCS-бакет с версионированием и uniform bucket-level access. Создаётся вручную
   (курица и яйцо), затем импортируется в Terraform сам.
 
@@ -125,8 +137,5 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 - [ ] Позже: другие облака.
 
 ## Открытые вопросы
-- Какие именно GCP-проекты входят в скоуп и какой из них станет админкой для state.
 - Нужны ли секреты в репо (тогда sops + age) или всё держим в Secret Manager.
-- Откуда делать `apply`: с хоста под личным аккаунтом или дать SA права на запись (тогда
-  отдельный SA для записи, ключ к которому агенту не выдаётся). В контейнер личный аккаунт
-  не логинить.
+- Судьба `talktruly` и `gen-lang-client-0948610743`: импортировать, удалить или оставить вне Terraform.

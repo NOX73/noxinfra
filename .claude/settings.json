@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(terraform apply*)",
+      "Bash(terraform destroy*)",
+      "Bash(terraform import*)",
+      "Bash(terraform state rm*)",
+      "Bash(terraform state mv*)",
+      "Bash(terraform state push*)",
+      "Bash(terraform state replace-provider*)",
+      "Bash(terraform force-unlock*)",
+      "Bash(terraform -chdir=* apply*)",
+      "Bash(terraform -chdir=* destroy*)",
+      "Bash(terraform -chdir=* import*)",
+      "Bash(terraform -chdir=* state rm*)",
+      "Bash(terraform -chdir=* state mv*)",
+      "Bash(terraform -chdir=* state push*)",
+      "Bash(terraform -chdir=* force-unlock*)",
+      "Bash(tf apply*)",
+      "Bash(tf destroy*)",
+      "Bash(tf -chdir=* apply*)",
+      "Bash(tf -chdir=* destroy*)",
+      "Bash(make apply*)",
+      "Bash(make destroy*)",
+      "Bash(gcloud * delete*)",
+      "Bash(gcloud * add-iam-policy-binding*)",
+      "Bash(gcloud * remove-iam-policy-binding*)",
+      "Bash(gcloud * set-iam-policy*)",
+      "Bash(gcloud * disable*)",
+      "Bash(gcloud storage rm*)",
+      "Bash(gsutil rm*)",
+      "Bash(gsutil rb*)"
+    ]
+  }
+}
