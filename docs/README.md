@@ -23,7 +23,7 @@ Terraform-описание всех моих облачных ресурсов. 
 |---|---|
 | `devcontainer.json` | Конфигурация контейнера, маунты, переменные окружения, расширения VS Code |
 | `Dockerfile` | `debian:bookworm-slim` + закреплённые инструменты |
-| `setup.sh` | postCreate: версии инструментов, проверка `.gitignore`, статус авторизации gcloud/ADC |
+| `setup.sh` | postCreate: версии инструментов, проверка `.gitignore`, ключ SA, активация SA в gcloud, предупреждение о личном аккаунте |
 | `isolate.sh` | postAttach: убирает проброшенные с хоста ssh-agent и git credential helper |
 
 **Инструменты:** Terraform 1.17.1, tflint 0.65.0, Google Cloud CLI, sops 3.13.3,
@@ -33,16 +33,28 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 **Решения:**
 
 - **Всё состояние оператора лежит на волюме `noxinfra-home` (смонтирован в `/root`):**
-  учётные данные gcloud и ADC, кэш провайдеров Terraform (`TF_PLUGIN_CACHE_DIR`), история
+  конфиг gcloud и ключ SA, кэш провайдеров Terraform (`TF_PLUGIN_CACHE_DIR`), история
   shell, состояние Claude Code (`~/.claude`, `~/.claude.json`). В noxvpn история Claude
   монтировалась с хоста, здесь — нет: она живёт только на волюме и переживает пересборку
   контейнера. Полный сброс — `docker volume rm noxinfra-home`.
 - **Репо смонтировано по тому же абсолютному пути, что на хосте.** Пути в логах, планах и
   сессиях Claude совпадают.
-- **Авторизация — личный аккаунт, без ключей сервисных аккаунтов.** Проектов несколько, а
-  ключ SA привязан к одному проекту, поэтому `CLOUDSDK_CORE_PROJECT` и
-  `GOOGLE_APPLICATION_CREDENTIALS` не заданы. Вход: `gcloud auth login --update-adc` —
-  одна команда и для gcloud, и для Terraform.
+- **В контейнере работает только сервисный аккаунт `claude-agent`, с правами на чтение.**
+  В контейнере работает агент (Claude Code), а всё, что лежит на волюме, ему доступно. Если
+  войти туда личным аккаунтом, агент получит права владельца, и вход через имперсонацию
+  этого не меняет. Поэтому в контейнере лежит только ключ SA:
+  `/root/.config/gcloud/claude-agent.json` на волюме, в репо его нет. Его же через
+  `GOOGLE_APPLICATION_CREDENTIALS` использует Terraform. Этого хватает на инвентаризацию и
+  `terraform plan`. `apply` пока делает человек, вне контейнера. `CLOUDSDK_CORE_PROJECT`
+  не задан, проект всегда указывается явно.
+  - SA создан в `thermal-history-343013`. Там же включены API, которые идут на его квоту
+    (`cloudasset`, `cloudresourcemanager`, `serviceusage`, `iam`), и выдана роль
+    `serviceusage.serviceUsageConsumer`.
+  - В каждом проекте у SA есть `roles/viewer`, `roles/iam.securityReviewer` и
+    `roles/cloudasset.viewer`.
+  - Ключ создаётся на хосте и копируется в контейнер:
+    `docker cp key.json $(docker ps -q --filter label=devcontainer.local_folder=$PWD):/root/.config/gcloud/claude-agent.json`.
+    После этого копию на хосте нужно удалить.
 - **Изоляция от хоста:** нет docker socket и docker CLI, нет проброшенного ssh-agent, нет
   host git credential helper. Для Terraform это не нужно, а доступ к хосту меньше.
 - **`config-connector` не ставится на arm64.** Пакет `google-cloud-cli-config-connector`
@@ -59,8 +71,10 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 ## Как начать работу
 
 1. VS Code → «Reopen in Container».
-2. В терминале контейнера: `gcloud auth login --update-adc`.
-3. `bash .devcontainer/setup.sh` — проверка, что всё на месте и авторизация есть.
+2. Ключ SA должен лежать в `/root/.config/gcloud/claude-agent.json` (см. выше). Личным
+   аккаунтом в контейнере не логиниться.
+3. `bash .devcontainer/setup.sh` — проверка, что всё на месте. Если SA ещё не активирован
+   в gcloud, скрипт его активирует.
 
 ## Что предстоит
 
@@ -68,8 +82,12 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 - [x] `git init`, первый коммит, remote (`github.com:NOX73/noxinfra`).
 
 ### 2. Инвентаризация GCP
-- [ ] Список проектов и billing-аккаунтов: `gcloud projects list`, `gcloud billing accounts list`.
-  Выяснить, есть ли организация или проекты «бездомные» (личный аккаунт).
+- [x] Список проектов: организации нет, все проекты «бездомные».
+  `gen-lang-client-0948610743` (Default Gemini Project), `noxapp-39eee` (Firebase),
+  `talktruly`, `thermal-history-343013` (основные ресурсы: VM, VPC, Cloud Run, DNS,
+  Artifact Registry).
+- [ ] Billing-аккаунты: SA их не видит. Нужен API `cloudbilling` и роль
+  `billing.viewer` на billing-аккаунте, либо `gcloud billing accounts list` на хосте.
 - [ ] По каждому проекту — включённые API и все ресурсы:
   `gcloud services list --enabled --project=P`,
   `gcloud asset search-all-resources --scope=projects/P` (нужен API `cloudasset.googleapis.com`).
@@ -109,3 +127,6 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 ## Открытые вопросы
 - Какие именно GCP-проекты входят в скоуп и какой из них станет админкой для state.
 - Нужны ли секреты в репо (тогда sops + age) или всё держим в Secret Manager.
+- Откуда делать `apply`: с хоста под личным аккаунтом или дать SA права на запись (тогда
+  отдельный SA для записи, ключ к которому агенту не выдаётся). В контейнер личный аккаунт
+  не логинить.

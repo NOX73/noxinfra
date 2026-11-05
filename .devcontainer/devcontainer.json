@@ -24,7 +24,9 @@
 		"TF_PLUGIN_CACHE_DIR": "/root/.terraform.d/plugin-cache",
 		"HISTFILE": "/root/.bash_history_persist",
 		// Several GCP projects are managed from here, so no default project is pinned.
-		// Auth = your user account via `gcloud auth login --update-adc` (stored in the volume).
+		// Auth = read-only service account claude-agent; its key is put on the volume by hand
+		// (never in the repo). gcloud: `gcloud auth activate-service-account --key-file=...`.
+		"GOOGLE_APPLICATION_CREDENTIALS": "/root/.config/gcloud/claude-agent.json",
 		"NOXINFRA_DEVCONTAINER": "1"
 	},
 
