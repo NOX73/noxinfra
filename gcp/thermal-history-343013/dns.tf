@@ -21,16 +21,6 @@ resource "google_dns_record_set" "apex_txt" {
   type            = "TXT"
 }
 
-resource "google_dns_record_set" "nl_outline_a" {
-  deletion_policy = "DELETE"
-  managed_zone    = "nox73"
-  name            = "nl.outline.nox73.com."
-  project         = local.project_id
-  rrdatas         = ["35.214.243.249"]
-  ttl             = 300
-  type            = "A"
-}
-
 resource "google_dns_record_set" "noxapp_cname" {
   deletion_policy = "DELETE"
   managed_zone    = "nox73"

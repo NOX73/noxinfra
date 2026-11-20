@@ -20,10 +20,11 @@
   ingress `ALL`). Нужно понять, кому сервис должен быть доступен снаружи (push от агента?).
   Закрыть всё, что можно закрыть.
 - 🔴 **Default compute SA `99257183987-compute@` с `roles/editor` в `thermal-history`.** От
-  его имени работают и VM `instance-1`, и Cloud Run `noxapp`. Плюс у него `datastore.owner`
-  в `noxapp-39eee`. Если взломают VPN-сервер, получат editor на весь проект. Решение: дать VM
-  и Cloud Run по отдельному SA с минимальными ролями (Cloud Run: `datastore.user` в noxapp,
-  доступ к Sheets и Drive), у default SA роль `editor` снять.
+  его имени работает Cloud Run `noxapp` (раньше и VM `instance-1`, она удалена). Плюс у него
+  `datastore.owner` в `noxapp-39eee`. Если взломают Cloud Run, получат editor на весь проект.
+  Решение: дать Cloud Run (и VM, если её вернут) по отдельному SA с минимальными ролями
+  (Cloud Run: `datastore.user` в noxapp, доступ к Sheets и Drive), у default SA роль
+  `editor` снять.
 - 🔴 **Ключи сервисных аккаунтов.** У `terraform-alex` (editor, ключ от 2025-06),
   `cert-manager-dns01` (dns.admin, ключ от 2025-06), `noxapp-play-publisher` (ключ от
   2026-08) и `claude-agent`. Нужно выяснить, где используется каждый ключ, ротировать живые
@@ -44,17 +45,18 @@
 
 ## VM `instance-1` (Outline VPN)
 
-- 🔴 **У VM нет бэкапов.** Расписание снапшотов `default-schedule-1` ни к одному диску не
-  привязано. Последний снапшот `instance-2-…-20260706` сделан с диска уже удалённой VM. Решение:
-  привязать расписание к диску `instance-1` (`google_compute_disk_resource_policy_attachment`),
-  а старый снапшот удалить, если он не нужен.
-- 🟡 **Ubuntu 20.04 (focal)**: стандартная поддержка закончилась в апреле 2025. Нужно
-  переехать на 24.04, проще всего пересоздать VM: Outline переустанавливается быстро, IP
-  статический.
-- 🟡 **`deletion_protection = false`, Secure Boot выключен.** Включить и то и другое.
+VM удалена 2026-11-20, от неё остался только archive-снапшот диска (см.
+[decommissioned.md](decommissioned.md)). Старый снапшот `instance-2-…-20260706` тоже
+удалён. Пункты про бэкапы, Ubuntu 20.04, `deletion_protection` и Secure Boot теперь
+актуальны только при восстановлении: лучше сразу поднимать новую VM на 24.04 со своим SA,
+включёнными защитами и привязанным расписанием снапшотов.
+
 - 🟡 **Project metadata `ssh-keys` с ключом `root@0fb141054fd5`**, хотя `enable-oslogin=TRUE`.
   При включённом OS Login ключи из метаданных игнорируются, так что этот ключ — мусор.
   Удалить.
+- ⚪ **Остатки от VM** (firewall `outline` и `ssh23`, расписание `default-schedule-1`,
+  политика Ops Agent). Бесплатные, оставлены для восстановления. Если VM не понадобится,
+  удалить. Список — в [decommissioned.md](decommissioned.md#бесплатные-остатки).
 
 ## Сеть и DNS
 
@@ -71,8 +73,8 @@
 - ⚪ **Connectivity tests `ssh-troubleshoot-*` (4 шт., 2022–2024).** Это мусор от отладки
   SSH в консоли, удалить.
 - ⚪ **Default VPC в auto mode** (40+ подсетей во всех регионах), а используется одна
-  подсеть. Позже можно перейти на custom-mode VPC с одной подсетью. Это переезд VM, так что
-  делать вместе с обновлением ОС.
+  подсеть. Позже можно перейти на custom-mode VPC с одной подсетью. Если VM вернут, делать
+  это сразу при её создании.
 
 ## Cloud Run и сборки
 

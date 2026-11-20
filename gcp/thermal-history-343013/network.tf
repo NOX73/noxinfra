@@ -33,7 +33,7 @@ resource "google_compute_firewall" "default_allow_ssh" {
   network         = "https://www.googleapis.com/compute/v1/projects/thermal-history-343013/global/networks/default"
   priority        = 65534
   project         = local.project_id
-  source_ranges   = ["34.1.250.211", "35.214.243.249", "35.235.240.0/20"]
+  source_ranges   = ["34.1.250.211", "35.235.240.0/20"]
   allow {
     ports    = ["22"]
     protocol = "tcp"
@@ -52,7 +52,7 @@ resource "google_compute_firewall" "ssh23" {
   network                 = "https://www.googleapis.com/compute/v1/projects/thermal-history-343013/global/networks/default"
   priority                = 1000
   project                 = local.project_id
-  source_ranges           = ["34.1.250.211", "35.214.143.149/32", "35.214.243.249", "35.235.240.0/20"]
+  source_ranges           = ["34.1.250.211", "35.214.143.149/32", "35.235.240.0/20"]
   target_service_accounts = ["99257183987-compute@developer.gserviceaccount.com"]
   allow {
     ports    = ["23"]

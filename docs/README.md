@@ -172,9 +172,11 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 #### `thermal-history-343013` — готово
 - Под управлением Terraform (`gcp/thermal-history-343013/`):
   - default VPC и 5 firewall-правил;
-  - VM `instance-1` (Outline VPN) со статическим IP;
+  - archive-снапшот диска удалённой VM `instance-1` (Outline VPN). Сама VM, её IP и
+    DNS-запись удалены 2026-11-20, подробности и восстановление — в
+    [decommissioned.md](decommissioned.md);
   - расписание снапшотов, метаданные проекта, политика Ops Agent;
-  - зона `nox73.com` и 4 записи в ней;
+  - зона `nox73.com` и 3 записи в ней;
   - Cloud Run `noxapp` с доменом `noxapp.nox73.com`;
   - Scheduler `noxapp-sync-images`;
   - Artifact Registry и бакет, которые создают деплои из исходников;
@@ -187,11 +189,12 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   удалили.
 - Cloud Run: Terraform владеет «оболочкой» сервиса. Образ, сборку и env задают деплои
   (`ignore_changes`).
-- Вне Terraform: ключи SA (импорт не поддерживается), снапшоты, ревизии Cloud Run, образы
+- Вне Terraform: ключи SA (импорт не поддерживается), ревизии Cloud Run, образы
   в Artifact Registry, connectivity tests (мусор), `_Default`/`_Required` логи, apex NS/SOA,
   default compute SA и service agents, `roles/owner` человека.
 
-Найденные проблемы и что улучшить — в [improvements.md](improvements.md).
+Найденные проблемы и что улучшить — в [improvements.md](improvements.md). Что удалено и
+как вернуть — в [decommissioned.md](decommissioned.md).
 
 ### 6. Эксплуатация
 - [ ] Регулярный `terraform plan` по всем проектам для поиска дрейфа.

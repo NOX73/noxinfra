@@ -23,12 +23,8 @@ import {
   id = "projects/thermal-history-343013/global/firewalls/ssh23"
 }
 import {
-  to = google_compute_address.outline
-  id = "projects/thermal-history-343013/regions/europe-west4/addresses/outline-v2-static-standard-tier"
-}
-import {
-  to = google_compute_instance.instance_1
-  id = "projects/thermal-history-343013/zones/europe-west4-a/instances/instance-1"
+  to = google_compute_snapshot.instance_1_final
+  id = "projects/thermal-history-343013/global/snapshots/instance-1-final-20261120"
 }
 import {
   to = google_compute_resource_policy.default_schedule_1
@@ -57,10 +53,6 @@ import {
 import {
   to = google_dns_record_set.noxapp_cname
   id = "projects/thermal-history-343013/managedZones/nox73/rrsets/noxapp.nox73.com./CNAME"
-}
-import {
-  to = google_dns_record_set.nl_outline_a
-  id = "projects/thermal-history-343013/managedZones/nox73/rrsets/nl.outline.nox73.com./A"
 }
 import {
   to = google_dns_record_set.v_ns
