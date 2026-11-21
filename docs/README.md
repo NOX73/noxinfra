@@ -226,6 +226,12 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 - В `gcp/_bootstrap/projects.tf`: сам проект (billing — USD-аккаунт).
 - SSH-ключи в метаданных VM не отслеживаются (`ignore_changes`): консоль дописывает туда
   короткоживущие ключи при каждом входе по SSH.
+- Конфиг Ops Agent на VM (`/etc/google-cloud-ops-agent/config.yaml`) правлен вручную
+  2026-11-04: метрики процессов (`agent.googleapis.com/processes/*`) не собираются,
+  остальное по умолчанию (интервал 60 с). Рядом бэкап исходного конфига
+  `config.yaml.bak-20261104`. В Terraform конфиг не описан. После правки агент шлёт
+  около 1.4 МиБ платных метрик в день (≈42 МиБ в месяц, при 150 МиБ бесплатно на
+  billing-аккаунт), до правки было 8.2 МиБ в день.
 - Провайдер без `user_project_override`: в проекте выключен Cloud Resource Manager API,
   квота за вызовы идёт в `thermal-history-343013`.
 - Вне Terraform: ежедневные снапшоты диска, подсети и маршруты auto-mode VPC,
