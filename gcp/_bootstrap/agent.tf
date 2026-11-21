@@ -23,6 +23,7 @@ locals {
   claude_agent_project_roles = {
     "thermal-history-343013"     = concat(local.read_roles, local.write_roles, ["roles/serviceusage.serviceUsageConsumer"])
     "noxapp-39eee"               = concat(local.read_roles, local.write_roles)
+    "bro-project-511307"         = concat(local.read_roles, local.write_roles)
     "gen-lang-client-0948610743" = local.read_roles
     "talktruly"                  = local.read_roles
   }

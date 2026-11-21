@@ -102,13 +102,14 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
     этот репо его не берём.** Здесь только NS-делегирование `v.nox73.com` в его зону (в
     `gcp/thermal-history-343013/dns.tf`) и бюджет `noxvpn` на billing-аккаунте (в
     `gcp/_bootstrap/billing.tf`).
-  - `bro-project-511307` — нигде не был учтён. Берём в скоуп и импортируем. Сначала
-    `claude-agent` нужен доступ к проекту, его выдаёт человек.
+  - `bro-project-511307` («Bro Project») — нигде не был учтён. Взят в скоуп и
+    импортирован 2026-11-21 (см. ниже). Доступ `claude-agent` выдал человек, потом эти роли
+    импортированы в `gcp/_bootstrap/agent.tf`.
 - [x] Billing-аккаунты: `01C100-B62CB3-89CCC4` (USD, к нему привязаны
   `thermal-history-343013`, `noxvpn-skv384` и `bro-project-511307`), `01F31D-A21EE0-6CD6CC`
   (RUB, проекты не привязаны), `007304-975A5D-1651C9` (закрыт). У остальных проектов billing не подключён.
 - [x] Скоуп: полностью описываем `thermal-history-343013`, `noxapp-39eee` и
-  `bro-project-511307` (последний — в процессе, см. выше).
+  `bro-project-511307`.
   - `gen-lang-client-0948610743` импортирован только как объект: сам проект и API
     `generativelanguage`, в `gcp/_bootstrap/projects.tf`. Его создал AI Studio, в нём живут
     Gemini API-ключи («Gemini API Key», «Aixle staging») и их SA. Ключами управляет AI
@@ -192,7 +193,7 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   - Scheduler `noxapp-sync-images`;
   - Artifact Registry и бакет, которые создают деплои из исходников;
   - 3 сервисных аккаунта, 3 роли на уровне проекта, 15 используемых API.
-- В `gcp/_bootstrap/agent.tf`: SA `claude-agent`, его роли во всех 4 проектах,
+- В `gcp/_bootstrap/agent.tf`: SA `claude-agent`, его роли во всех 5 проектах,
   `billing.viewer` на billing-аккаунтах, API админки.
 - В `gcp/_bootstrap/billing.tf`: бюджет `noxvpn` на USD-аккаунте ($15 в месяц, следит
   только за `noxvpn-skv384`).
@@ -205,6 +206,28 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
 - Вне Terraform: ключи SA (импорт не поддерживается), ревизии Cloud Run, образы
   в Artifact Registry, connectivity tests (мусор), `_Default`/`_Required` логи, apex NS/SOA,
   default compute SA и service agents, `roles/owner` человека.
+
+#### `bro-project-511307` — готово
+- Проект общий: у него **два владельца**, `gNOX73@gmail.com` и `bazilio073@gmail.com`.
+  Второй владелец может менять что-то в консоли, так что дрейф в этом проекте может
+  появиться не по нашей вине. Это нужно учитывать, прежде чем откатывать дрейф кодом.
+- Под управлением Terraform (`gcp/bro-project-511307/`):
+  - VM `fortg` (`e2-micro`, `us-central1-a`, Debian 13): MTProxy и SOCKS5 (3proxy) для
+    Telegram. Внешний IP эфемерный (`35.209.85.181`);
+  - ежедневное расписание снапшотов `default-schedule-1` (хранение 14 дней) и его
+    привязка к диску `fortg`;
+  - default VPC и 6 firewall-правил (`allow-mtproxy`: tcp 80/443, `allow-socks5`: tcp 1080,
+    и 4 стандартных `default-allow-*`);
+  - метаданные проекта `ssh-keys`, политика Ops Agent;
+  - роль `editor` у default compute SA, 5 используемых API.
+- В `gcp/_bootstrap/projects.tf`: сам проект (billing — USD-аккаунт).
+- SSH-ключи в метаданных VM не отслеживаются (`ignore_changes`): консоль дописывает туда
+  короткоживущие ключи при каждом входе по SSH.
+- Провайдер без `user_project_override`: в проекте выключен Cloud Resource Manager API,
+  квота за вызовы идёт в `thermal-history-343013`.
+- Вне Terraform: ежедневные снапшоты диска, подсети и маршруты auto-mode VPC,
+  `InstanceSettings`, default compute SA и service agents, `roles/owner` обоих людей,
+  `_Default`/`_Required` логи, неиспользуемые API.
 
 Найденные проблемы и что улучшить — в [improvements.md](improvements.md). Что удалено и
 как вернуть — в [decommissioned.md](decommissioned.md).

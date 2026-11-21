@@ -52,3 +52,21 @@ resource "google_project" "noxapp" {
 
   deletion_policy = "PREVENT"
 }
+
+# "Bro Project": VM fortg (MTProxy + SOCKS5 for Telegram); resources inside:
+# gcp/bro-project-511307. Shared project: it has a second owner (bazilio073@gmail.com).
+# Billing: USD account.
+import {
+  to = google_project.bro
+  id = "bro-project-511307"
+}
+
+resource "google_project" "bro" {
+  project_id      = "bro-project-511307"
+  name            = "Bro Project"
+  billing_account = local.billing_account
+
+  auto_create_network = true
+
+  deletion_policy = "PREVENT"
+}
