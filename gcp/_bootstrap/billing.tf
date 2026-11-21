@@ -10,11 +10,17 @@ import {
 }
 
 # Watches noxvpn-skv384 (project number 136547520670). That project itself is managed in
-# the noxvpn repo, not here. No notificationsRule: alerts go by email to billing account
-# admins and users (the default).
+# the noxvpn repo, not here.
 resource "google_billing_budget" "noxvpn" {
   billing_account = local.billing_account
   display_name    = "noxvpn"
+
+  # Actual and forecasted spend goes to Pub/Sub too (billing_export.tf); the default
+  # emails to billing admins stay on.
+  all_updates_rule {
+    pubsub_topic   = google_pubsub_topic.billing_budgets.id
+    schema_version = "1.0"
+  }
 
   budget_filter {
     projects               = ["projects/136547520670"]
@@ -53,6 +59,13 @@ resource "google_billing_budget" "thermal" {
   billing_account = local.billing_account
   display_name    = "thermal-history"
 
+  # Actual and forecasted spend goes to Pub/Sub too (billing_export.tf); the default
+  # emails to billing admins stay on.
+  all_updates_rule {
+    pubsub_topic   = google_pubsub_topic.billing_budgets.id
+    schema_version = "1.0"
+  }
+
   budget_filter {
     projects               = ["projects/99257183987"]
     calendar_period        = "MONTH"
@@ -86,6 +99,13 @@ resource "google_billing_budget" "thermal" {
 resource "google_billing_budget" "bro" {
   billing_account = local.billing_account
   display_name    = "bro-project"
+
+  # Actual and forecasted spend goes to Pub/Sub too (billing_export.tf); the default
+  # emails to billing admins stay on.
+  all_updates_rule {
+    pubsub_topic   = google_pubsub_topic.billing_budgets.id
+    schema_version = "1.0"
+  }
 
   budget_filter {
     projects               = ["projects/305470792638"]
