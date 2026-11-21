@@ -95,10 +95,20 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   `gen-lang-client-0948610743` (Default Gemini Project), `noxapp-39eee` (Firebase),
   `talktruly`, `thermal-history-343013` (основные ресурсы: VM, VPC, Cloud Run, DNS,
   Artifact Registry).
-- [x] Billing-аккаунты: `01C100-B62CB3-89CCC4` (USD, к нему привязан
-  `thermal-history-343013`), `01F31D-A21EE0-6CD6CC` (RUB, проекты не привязаны),
-  `007304-975A5D-1651C9` (закрыт). У остальных проектов billing не подключён.
-- [x] Скоуп: полностью описываем `thermal-history-343013` и `noxapp-39eee`.
+- [x] Проекты, которые видны только через billing (2026-11-20). Первая инвентаризация
+  видела только проекты, к которым у `claude-agent` есть доступ. По
+  `gcloud billing projects list` к USD-аккаунту привязаны ещё два:
+  - `noxvpn-skv384` (проект noxvpn) — **управляется из отдельного репозитория noxvpn, в
+    этот репо его не берём.** Здесь только NS-делегирование `v.nox73.com` в его зону (в
+    `gcp/thermal-history-343013/dns.tf`) и бюджет `noxvpn` на billing-аккаунте (в
+    `gcp/_bootstrap/billing.tf`).
+  - `bro-project-511307` — нигде не был учтён. Берём в скоуп и импортируем. Сначала
+    `claude-agent` нужен доступ к проекту, его выдаёт человек.
+- [x] Billing-аккаунты: `01C100-B62CB3-89CCC4` (USD, к нему привязаны
+  `thermal-history-343013`, `noxvpn-skv384` и `bro-project-511307`), `01F31D-A21EE0-6CD6CC`
+  (RUB, проекты не привязаны), `007304-975A5D-1651C9` (закрыт). У остальных проектов billing не подключён.
+- [x] Скоуп: полностью описываем `thermal-history-343013`, `noxapp-39eee` и
+  `bro-project-511307` (последний — в процессе, см. выше).
   - `gen-lang-client-0948610743` импортирован только как объект: сам проект и API
     `generativelanguage`, в `gcp/_bootstrap/projects.tf`. Его создал AI Studio, в нём живут
     Gemini API-ключи («Gemini API Key», «Aixle staging») и их SA. Ключами управляет AI
@@ -134,7 +144,8 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
     <project-b>/
   modules/
   ```
-  `gcp/_bootstrap/` уже есть: проект-админка, бакет state, Gemini-проект.
+  `gcp/_bootstrap/` уже есть: проект-админка, бакет state, Gemini-проект, бюджеты на
+  billing-аккаунте.
 - [x] Версии: `google ~> 8.10`, Terraform `>= 1.17`. `.terraform.lock.hcl` коммитится и
   собирается под linux_arm64, linux_amd64 и darwin_arm64 (`terraform providers lock`).
 - [ ] `google-beta`, когда понадобится.
@@ -183,6 +194,8 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   - 3 сервисных аккаунта, 3 роли на уровне проекта, 15 используемых API.
 - В `gcp/_bootstrap/agent.tf`: SA `claude-agent`, его роли во всех 4 проектах,
   `billing.viewer` на billing-аккаунтах, API админки.
+- В `gcp/_bootstrap/billing.tf`: бюджет `noxvpn` на USD-аккаунте ($15 в месяц, следит
+  только за `noxvpn-skv384`).
 - **Секреты в код не попадают.** В env Cloud Run и в URL Scheduler лежат секреты открытым
   текстом, поэтому у этих полей стоит `ignore_changes`, а в коде их нет. В state секреты
   всё равно есть. Черновик `-generate-config-out` с секретами генерировали вне репо и потом

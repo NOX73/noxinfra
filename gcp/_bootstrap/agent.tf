@@ -73,6 +73,7 @@ resource "google_billing_account_iam_member" "claude_agent_viewer" {
 # (quota for its calls lands here). Other APIs of this project: gcp/thermal-history-343013.
 locals {
   admin_services = toset([
+    "billingbudgets.googleapis.com",
     "cloudasset.googleapis.com",
     "cloudbilling.googleapis.com",
     "cloudresourcemanager.googleapis.com",
