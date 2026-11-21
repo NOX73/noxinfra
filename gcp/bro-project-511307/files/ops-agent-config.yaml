@@ -1,0 +1,22 @@
+# Ops Agent config of fortg: /etc/google-cloud-ops-agent/config.yaml
+# Source of truth: noxinfra gcp/bro-project-511307/files/ops-agent-config.yaml.
+# Applied by hand (OS policies are off in this project): copy to the VM, then
+#   sudo systemctl restart google-cloud-ops-agent
+#
+# Agent metrics are billed above 150 MiB/month per billing account. Defaults (60 s, with
+# process metrics) give ~8 MiB/day; this gives ~0.3 MiB/day. Logs: agent defaults.
+metrics:
+  receivers:
+    hostmetrics:
+      type: hostmetrics
+      collection_interval: 300s
+  processors:
+    metrics_filter:
+      type: exclude_metrics
+      metrics_pattern:
+        - agent.googleapis.com/processes/*
+  service:
+    pipelines:
+      default_pipeline:
+        receivers: [hostmetrics]
+        processors: [metrics_filter]
