@@ -43,3 +43,74 @@ resource "google_billing_budget" "noxvpn" {
     spend_basis       = "FORECASTED_SPEND"
   }
 }
+
+# One budget per project on the USD account. Same thresholds as noxvpn: email at 50%, 90%
+# and 100% of actual spend, plus 100% of forecasted spend.
+
+# thermal-history-343013 (project number 99257183987): Cloud Run noxapp, DNS zone,
+# Artifact Registry, the archive snapshot of instance-1.
+resource "google_billing_budget" "thermal" {
+  billing_account = local.billing_account
+  display_name    = "thermal-history"
+
+  budget_filter {
+    projects               = ["projects/99257183987"]
+    calendar_period        = "MONTH"
+    credit_types_treatment = "INCLUDE_ALL_CREDITS"
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "USD"
+      units         = "10"
+    }
+  }
+
+  threshold_rules {
+    threshold_percent = 0.5
+  }
+  threshold_rules {
+    threshold_percent = 0.9
+  }
+  threshold_rules {
+    threshold_percent = 1.0
+  }
+  threshold_rules {
+    threshold_percent = 1.0
+    spend_basis       = "FORECASTED_SPEND"
+  }
+}
+
+# bro-project-511307 (project number 305470792638): VM fortg (e2-micro + IP + daily
+# snapshots, roughly $8-10/month).
+resource "google_billing_budget" "bro" {
+  billing_account = local.billing_account
+  display_name    = "bro-project"
+
+  budget_filter {
+    projects               = ["projects/305470792638"]
+    calendar_period        = "MONTH"
+    credit_types_treatment = "INCLUDE_ALL_CREDITS"
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "USD"
+      units         = "15"
+    }
+  }
+
+  threshold_rules {
+    threshold_percent = 0.5
+  }
+  threshold_rules {
+    threshold_percent = 0.9
+  }
+  threshold_rules {
+    threshold_percent = 1.0
+  }
+  threshold_rules {
+    threshold_percent = 1.0
+    spend_basis       = "FORECASTED_SPEND"
+  }
+}
