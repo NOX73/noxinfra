@@ -39,10 +39,6 @@ import {
   id = "ssh-keys"
 }
 import {
-  to = google_os_config_os_policy_assignment.ops_agent
-  id = "projects/thermal-history-343013/locations/europe-west4-a/osPolicyAssignments/goog-ops-agent-v2-template-1-5-0-europe-west4-a"
-}
-import {
   to = google_dns_managed_zone.nox73
   id = "projects/thermal-history-343013/managedZones/nox73"
 }

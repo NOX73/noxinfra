@@ -54,7 +54,8 @@ resource "google_billing_budget" "noxvpn" {
 # and 100% of actual spend, plus 100% of forecasted spend.
 
 # thermal-history-343013 (project number 99257183987): Cloud Run noxapp, DNS zone,
-# Artifact Registry, the archive snapshot of instance-1.
+# Artifact Registry, the archive snapshot of instance-1. $30 is a ceiling for the whole
+# project, set on purpose above the current spend.
 resource "google_billing_budget" "thermal" {
   billing_account = local.billing_account
   display_name    = "thermal-history"
@@ -75,7 +76,7 @@ resource "google_billing_budget" "thermal" {
   amount {
     specified_amount {
       currency_code = "USD"
-      units         = "10"
+      units         = "30"
     }
   }
 

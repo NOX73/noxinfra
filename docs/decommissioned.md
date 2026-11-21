@@ -49,8 +49,9 @@
    Параметры как раньше: `e2-micro`, `europe-west4-a`, сеть `default`, `access_config` с
    новым IP. **SA тот же**: `99257183987-compute@`. Firewall-правила `outline`
    (tcp/udp 443, 1640, 38014) и `ssh23` нацелены на этот SA, с другим SA они работать не
-   будут. Чтобы Ops Agent поставился сам, нужен лейбл
-   `goog-ops-agent-policy=v2-template-1-5-0`. Прежнюю конфигурацию VM можно взять из git:
+   будут. Политика, которая ставила Ops Agent, удалена 2026-11-21; если агент нужен, его
+   придётся ставить заново (и помнить, что его метрики платные сверх 150 МиБ на аккаунт).
+   Прежнюю конфигурацию VM можно взять из git:
    `git show <коммит до удаления>:gcp/thermal-history-343013/vm.tf`.
 4. Вернуть A-запись `nl.outline.nox73.com` с новым IP (`google_dns_record_set` в
    [`dns.tf`](../gcp/thermal-history-343013/dns.tf)). При желании вернуть новый IP в
@@ -69,6 +70,9 @@
 
 ### Бесплатные остатки
 
+Политику Ops Agent (`goog-ops-agent-v2-template-1-5-0-europe-west4-a`) удалили
+2026-11-21: VM в проекте нет, она ни на что не действовала.
+
 Эти ресурсы остались после VM. Ничего не стоят, ничего не делают, всё ещё в Terraform.
 Их оставили, чтобы восстановление было проще. Если VM не понадобится, можно удалить.
 
@@ -77,7 +81,6 @@
 | Firewall `outline` | [`network.tf`](../gcp/thermal-history-343013/network.tf) | Открывает Outline-порты (tcp/udp 443, 1640, 38014) из `0.0.0.0/0` для VM с SA `99257183987-compute@`. Сейчас таких VM нет |
 | Firewall `ssh23` | [`network.tf`](../gcp/thermal-history-343013/network.tf) | `tcp:23` для того же SA, был нужен VM |
 | Расписание снапшотов `default-schedule-1` | [`vm.tf`](../gcp/thermal-history-343013/vm.tf) | Еженедельно по воскресеньям, хранение 20 дней. Ни к одному диску не привязано |
-| OS Policy Assignment `goog-ops-agent-v2-template-1-5-0-europe-west4-a` | [`ops_agent.tf`](../gcp/thermal-history-343013/ops_agent.tf) | Ставит Ops Agent на VM с лейблом `goog-ops-agent-policy=v2-template-1-5-0`. Сейчас таких VM нет |
 | Метаданные проекта `enable-oslogin`, `ssh-keys` | [`vm.tf`](../gcp/thermal-history-343013/vm.tf) | Действуют на все VM проекта. `ssh-keys` и так мусор (при OS Login игнорируется) |
 
 Firewall-правила `default-allow-*` и default VPC к VM не относятся, они общие для

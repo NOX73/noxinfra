@@ -188,7 +188,7 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   - archive-снапшот диска удалённой VM `instance-1` (Outline VPN). Сама VM, её IP и
     DNS-запись удалены 2026-11-20, подробности и восстановление — в
     [decommissioned.md](decommissioned.md);
-  - расписание снапшотов, метаданные проекта, политика Ops Agent;
+  - расписание снапшотов, метаданные проекта;
   - зона `nox73.com` и 3 записи в ней;
   - Cloud Run `noxapp` с доменом `noxapp.nox73.com`;
   - Scheduler `noxapp-sync-images`;
@@ -198,7 +198,7 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   `billing.viewer` на billing-аккаунтах и `billing.costsManager` на USD-аккаунте, API
   админки.
 - В `gcp/_bootstrap/billing.tf`: по бюджету на каждый проект USD-аккаунта — `noxvpn`
-  ($15, `noxvpn-skv384`), `thermal-history` ($10), `bro-project` ($15). Пороги: 50%, 90%,
+  ($15, `noxvpn-skv384`), `thermal-history` ($30), `bro-project` ($15). Пороги: 50%, 90%,
   100% факта и 100% прогноза.
 - **Секреты в код не попадают.** В env Cloud Run и в URL Scheduler лежат секреты открытым
   текстом, поэтому у этих полей стоит `ignore_changes`, а в коде их нет. В state секреты
