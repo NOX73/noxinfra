@@ -1,8 +1,8 @@
 # Budgets on the USD billing account. Budgets belong to the billing account, not to a
 # project, so they live here even when they watch a project managed elsewhere.
 #
-# claude-agent has only roles/billing.viewer: enough to read and import budgets, but any
-# change here needs billing.costsManager, i.e. an apply by a human.
+# claude-agent has roles/billing.costsManager on the USD account (see agent.tf), so it can
+# apply changes here.
 
 import {
   to = google_billing_budget.noxvpn

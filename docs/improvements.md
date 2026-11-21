@@ -99,7 +99,6 @@ VM удалена 2026-11-20, от неё остался только archive-с
   перенастраивать. Пока IP используется, статический стоит столько же, сколько эфемерный,
   так что его можно зарезервировать бесплатно (`google_compute_address`).
 - 🟡 **`deletion_protection = false`, Secure Boot выключен.** Включить.
-- ⚪ **Бюджет `bro-project` описан, но ещё не применён** (см. «Billing и общее»).
 
 ## Cloud Run и сборки
 
@@ -117,10 +116,9 @@ VM удалена 2026-11-20, от неё остался только archive-с
 
 ## Billing и общее
 
-- 🟡 **Бюджеты по проектам** (`gcp/_bootstrap/billing.tf`): `noxvpn` ($15, импортирован),
-  `thermal-history` ($10) и `bro-project` ($15). Последние два описаны в коде, но
-  **ещё не применены**: нужен `terraform apply` человеком с `billing.costsManager` (у
-  `claude-agent` только `billing.viewer`).
+- ⚪ **Бюджеты по проектам есть** (`gcp/_bootstrap/billing.tf`): `noxvpn` ($15),
+  `thermal-history` ($10), `bro-project` ($15). Уведомления идут только по email админам
+  billing-аккаунта. Если нужны пуши или Pub/Sub, добавить `all_updates_rule`.
 - ⚪ **RUB Billing Account `01F31D-…` открыт, но к нему не привязан ни один проект.**
   Закрыть, если не нужен.
 - ⚪ **Лишние API.** В `thermal` и `noxapp` включено по 40 API, большинство включились

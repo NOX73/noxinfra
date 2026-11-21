@@ -70,6 +70,19 @@ resource "google_billing_account_iam_member" "claude_agent_viewer" {
   member             = local.claude_agent_member
 }
 
+# Lets the agent manage budgets (gcp/_bootstrap/billing.tf) on the USD account, the one
+# all billed projects are on. Granted by hand on 2026-11-21, then imported.
+import {
+  to = google_billing_account_iam_member.claude_agent_costs_manager
+  id = "${local.billing_accounts.usd} roles/billing.costsManager serviceAccount:claude-agent@${local.admin_project_id}.iam.gserviceaccount.com"
+}
+
+resource "google_billing_account_iam_member" "claude_agent_costs_manager" {
+  billing_account_id = local.billing_accounts.usd
+  role               = "roles/billing.costsManager"
+  member             = local.claude_agent_member
+}
+
 # APIs of the admin project that the agent and Terraform itself depend on
 # (quota for its calls lands here). Other APIs of this project: gcp/thermal-history-343013.
 locals {

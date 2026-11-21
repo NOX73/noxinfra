@@ -54,7 +54,8 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
     владельца.
   - Остальные проекты: только чтение (`roles/viewer`, `roles/iam.securityReviewer`,
     `roles/cloudasset.viewer`).
-  - Открытые billing-аккаунты: `roles/billing.viewer`.
+  - Открытые billing-аккаунты: `roles/billing.viewer`. На USD-аккаунте ещё
+    `roles/billing.costsManager`: с ней агент управляет бюджетами.
   - Ключ создаётся на хосте и копируется в контейнер:
     `docker cp key.json $(docker ps -q --filter label=devcontainer.local_folder=$PWD):/root/.config/gcloud/claude-agent.json`.
     После этого копию на хосте нужно удалить. Ключ стоит периодически ротировать.
@@ -194,9 +195,11 @@ age 1.3.2, yq 4.54.1, shellcheck, jq, git, make. Бинарники с GitHub/Ha
   - Artifact Registry и бакет, которые создают деплои из исходников;
   - 3 сервисных аккаунта, 3 роли на уровне проекта, 15 используемых API.
 - В `gcp/_bootstrap/agent.tf`: SA `claude-agent`, его роли во всех 5 проектах,
-  `billing.viewer` на billing-аккаунтах, API админки.
-- В `gcp/_bootstrap/billing.tf`: бюджет `noxvpn` на USD-аккаунте ($15 в месяц, следит
-  только за `noxvpn-skv384`).
+  `billing.viewer` на billing-аккаунтах и `billing.costsManager` на USD-аккаунте, API
+  админки.
+- В `gcp/_bootstrap/billing.tf`: по бюджету на каждый проект USD-аккаунта — `noxvpn`
+  ($15, `noxvpn-skv384`), `thermal-history` ($10), `bro-project` ($15). Пороги: 50%, 90%,
+  100% факта и 100% прогноза.
 - **Секреты в код не попадают.** В env Cloud Run и в URL Scheduler лежат секреты открытым
   текстом, поэтому у этих полей стоит `ignore_changes`, а в коде их нет. В state секреты
   всё равно есть. Черновик `-generate-config-out` с секретами генерировали вне репо и потом
